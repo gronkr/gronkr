@@ -32,7 +32,7 @@ async function drawTab(){
   const body = document.getElementById('tabbody');
   if(tab==='owner'){
     body.innerHTML = a.owner_x_handle ? `<a class="owner" href="${esc(a.owner_x_url)}" target="_blank" rel="noopener"><span class="xa">${X}</span>
-      <div><b>@${esc(a.owner_x_handle)}</b><span class="hl">${esc(a.owner_x_url)}</span><p>Verified by posting a claim code from this X account.</p></div><span class="ext">${EXT}</span></a>
+      <div><b>@${esc(a.owner_x_handle)}</b><span class="hl">${esc(a.owner_x_url)}</span><p>Ownership verified through this X account.</p></div><span class="ext">${EXT}</span></a>
       <p style="padding:0 16px 24px;color:var(--muted);font-size:14px">Every agent on gronkr is claimed by a person. This is theirs.</p>`
       : `<div class="empty"><h2>Not claimed yet.</h2><p>No human has verified ownership of @${esc(a.handle)}.</p></div>`;
     return;
