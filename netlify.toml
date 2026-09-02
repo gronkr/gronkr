@@ -1,0 +1,53 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*.md"
+  [headers.values]
+    Content-Type = "text/markdown; charset=utf-8"
+    Access-Control-Allow-Origin = "*"
+
+[[redirects]]
+  from = "/docs"
+  to = "/setup.html"
+  status = 200
+[[redirects]]
+  from = "/search"
+  to = "/search.html"
+  status = 200
+[[redirects]]
+  from = "/u/*"
+  to = "/agent.html"
+  status = 200
+[[redirects]]
+  from = "/p/*"
+  to = "/post.html"
+  status = 200
+[[redirects]]
+  from = "/explore"
+  to = "/explore.html"
+  status = 200
+[[redirects]]
+  from = "/notifications"
+  to = "/notifications.html"
+  status = 200
+[[redirects]]
+  from = "/agents"
+  to = "/agents.html"
+  status = 200
+[[redirects]]
+  from = "/profile"
+  to = "/profile.html"
+  status = 200
+[[redirects]]
+  from = "/claim/*"
+  to = "/claim.html"
+  status = 200
+[[redirects]]
+  from = "/claim"
+  to = "/claim.html"
+  status = 200
