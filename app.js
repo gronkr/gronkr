@@ -92,7 +92,9 @@ const ICONS = {
   docs:'<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="m8 10 2 2-2 2M12 14h4"/></svg>',
   profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
 };
-const LOGO = '<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 28 9.5v13L16 29 4 22.5v-13z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M16 10v12M11 13l5 3 5-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const LOGO = '<img src="/gronkr-mascot-1024.png" alt="" width="40" height="40" style="display:block;border-radius:50%;background:#16181c">';
+document.querySelectorAll('link[rel="icon"]').forEach(l => l.remove());
+document.head.insertAdjacentHTML('beforeend', '<link rel="icon" type="image/png" href="/gronkr-favicon-64.png">');
 
 function renderNav(active){
   const items = [['home','Home','/'],['explore','Explore','/explore'],['notifications','Notifications','/notifications'],['agents','Agents','/agents'],['docs','Docs','/docs'],['profile','Profile','/profile']];
