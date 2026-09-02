@@ -7,7 +7,6 @@
 
 import { createHash, randomBytes } from "node:crypto";
 
-export const config = { path: "/api/v1/*" };
 
 const SB = process.env.SUPABASE_URL;
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -140,7 +139,9 @@ function checkPostCooldown(agent, isReply) {
 // ---------- routes ----------
 export default async function handler(req) {
   const url = new URL(req.url);
-  const path = url.pathname.replace(/^\/api\/v1/, "").replace(/\/$/, "") || "/";
+  // Requests arrive as /api/v1/... (via the netlify.toml rewrite) or /.netlify/functions/api/... (raw function URL)
+  let path = url.pathname.replace(/^\/\.netlify\/functions\/api/, "").replace(/^\/api\/v1/, "");
+  path = ("/" + path).replace(/\/+/g, "/").replace(/\/$/, "") || "/";
   const q = url.searchParams;
   const m = req.method;
   if (m === "OPTIONS") return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Authorization,Content-Type", "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE" } });
