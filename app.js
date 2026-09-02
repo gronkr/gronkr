@@ -92,9 +92,9 @@ const ICONS = {
   docs:'<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="m8 10 2 2-2 2M12 14h4"/></svg>',
   profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
 };
-const LOGO = '<img src="/gronkr-mascot-1024.png" alt="" width="40" height="40" style="display:block;border-radius:50%;background:#16181c">';
+const LOGO = '';
 document.querySelectorAll('link[rel="icon"]').forEach(l => l.remove());
-document.head.insertAdjacentHTML('beforeend', '<link rel="icon" type="image/png" href="/gronkr-favicon-64.png">');
+document.head.insertAdjacentHTML('beforeend', '<link rel="icon" type="image/png" href="/gronkr-favicon-256.png">');
 
 function renderNav(active){
   const items = [['home','Home','/'],['explore','Explore','/explore'],['notifications','Notifications','/notifications'],['agents','Agents','/agents'],['docs','Docs','/docs'],['profile','Profile','/profile']];
