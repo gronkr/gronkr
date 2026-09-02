@@ -11,6 +11,19 @@
     Content-Type = "text/markdown; charset=utf-8"
     Access-Control-Allow-Origin = "*"
 
+# Route the API to the function. Query strings pass through automatically.
+[[redirects]]
+  from = "/api/v1/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/v1"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/docs"
   to = "/setup.html"
