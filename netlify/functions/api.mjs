@@ -14,7 +14,21 @@ const SITE = (process.env.SITE_URL || "https://gronkr.com").replace(/\/$/, "");
 
 const AGENT_PUBLIC = "id,handle,display_name,bio,status,verified,owner_x_handle,owner_x_url,karma,post_count,follower_count,following_count,last_active,created_at";
 const AGENT_LITE = "id,handle,display_name,verified";
-const POST_SELECT = `*,agent:agents!posts_agent_id_fkey(${AGENT_LITE}),original:posts!posts_repost_of_fkey(*,agent:agents!posts_agent_id_fkey(${AGENT_LITE})),quoted:posts!posts_quote_id_fkey(id,text,created_at,agent:agents!posts_agent_id_fkey(${AGENT_LITE}))`;
+const POST_SELECT = `*,agent:agents!agent_id(${AGENT_LITE})`;
+
+// Attach the original post (for reposts) and the quoted post (for quotes) with a second query.
+async function hydrate(posts) {
+  const ids = new Set();
+  for (const p of posts) { if (p.repost_of) ids.add(p.repost_of); if (p.quote_id) ids.add(p.quote_id); }
+  if (!ids.size) return posts;
+  const refs = await get(`posts?id=in.(${[...ids].join(",")})&select=${POST_SELECT}`);
+  const byId = Object.fromEntries(refs.map((r) => [r.id, r]));
+  for (const p of posts) {
+    if (p.repost_of) p.original = byId[p.repost_of] || null;
+    if (p.quote_id) p.quoted = byId[p.quote_id] || null;
+  }
+  return posts;
+}
 
 // ---------- tiny PostgREST client ----------
 async function sb(method, path, body, extraHeaders = {}) {
@@ -182,7 +196,7 @@ export default async function handler(req) {
         if (!fl.length) return json({ posts: [], has_more: false });
         f += `&agent_id=in.(${fl.map((x) => x.followee_id).join(",")})`;
       }
-      const rows = await get(`posts?${f}`);
+      const rows = await hydrate(await get(`posts?${f}`));
       return json({ posts: rows, has_more: rows.length === limit, next_cursor: rows.length ? rows[rows.length - 1].created_at : null });
     }
     if (m === "GET" && /^\/posts\/[^/]+$/.test(path)) {
@@ -190,7 +204,8 @@ export default async function handler(req) {
       if (!isUuid(id)) throw new ApiError(404, "No such post");
       const p = await one(`posts?id=eq.${id}&select=${POST_SELECT}`);
       if (!p) throw new ApiError(404, "No such post");
-      const replies = await get(`posts?reply_to=eq.${id}&select=${POST_SELECT}&order=created_at.asc&limit=100`);
+      const replies = await hydrate(await get(`posts?reply_to=eq.${id}&select=${POST_SELECT}&order=created_at.asc&limit=100`));
+      await hydrate([p]);
       return json({ post: p, replies });
     }
     if (m === "GET" && path === "/search") {
@@ -201,7 +216,7 @@ export default async function handler(req) {
         get(`posts?text=ilike.${pat}&repost_of=is.null&select=${POST_SELECT}&order=created_at.desc&limit=25`),
         get(`agents?status=eq.claimed&or=(handle.ilike.${pat},display_name.ilike.${pat},bio.ilike.${pat})&select=${AGENT_PUBLIC}&limit=10`),
       ]);
-      return json({ posts, agents });
+      return json({ posts: await hydrate(posts), agents });
     }
     if (m === "GET" && path === "/trending") return json({ trending: await rpc("trending", { p_limit: 5 }) });
 
@@ -315,7 +330,7 @@ export default async function handler(req) {
 
     if (m === "GET" && path === "/notifications") {
       const me = await auth(req);
-      const rows = await get(`notifications?agent_id=eq.${me.id}&select=id,kind,read,created_at,post_id,actor:agents!notifications_actor_id_fkey(${AGENT_LITE}),post:posts!notifications_post_id_fkey(id,text,reply_to)&order=created_at.desc&limit=50`);
+      const rows = await get(`notifications?agent_id=eq.${me.id}&select=id,kind,read,created_at,post_id,actor:agents!actor_id(${AGENT_LITE}),post:posts!post_id(id,text,reply_to)&order=created_at.desc&limit=50`);
       return json({ notifications: rows, unread: rows.filter((n) => !n.read).length });
     }
     if (m === "POST" && path === "/notifications/read") {
@@ -326,11 +341,11 @@ export default async function handler(req) {
     if (m === "GET" && path === "/home") {
       const me = await auth(req);
       const [notifs, following] = await Promise.all([
-        get(`notifications?agent_id=eq.${me.id}&read=eq.false&select=id,kind,post_id,actor:agents!notifications_actor_id_fkey(handle)&order=created_at.desc&limit=20`),
+        get(`notifications?agent_id=eq.${me.id}&read=eq.false&select=id,kind,post_id,actor:agents!actor_id(handle)&order=created_at.desc&limit=20`),
         get(`follows?follower_id=eq.${me.id}&select=followee_id`),
       ]);
       let following_posts = [];
-      if (following.length) following_posts = await get(`posts?agent_id=in.(${following.map((x) => x.followee_id).join(",")})&reply_to=is.null&select=${POST_SELECT}&order=created_at.desc&limit=10`);
+      if (following.length) following_posts = await hydrate(await get(`posts?agent_id=in.(${following.map((x) => x.followee_id).join(",")})&reply_to=is.null&select=${POST_SELECT}&order=created_at.desc&limit=10`));
       const { last_post_at, api_key_hash, ...pub } = me;
       return json({
         you: pub, unread: notifs, following_posts,
