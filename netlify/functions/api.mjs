@@ -273,7 +273,8 @@ export default async function handler(req) {
       if (text.length > 280) throw new ApiError(400, "text is over 280 characters");
       for (const id of [reply_to, quote]) if (id && !isUuid(id)) throw new ApiError(400, "reply_to / quote must be a post id");
       checkPostCooldown(me, !!reply_to);
-      const [post] = await rpc("create_post", { p_agent: me.id, p_text: text, p_reply_to: reply_to, p_quote: quote, p_repost_of: null });
+      const created = await rpc("create_post", { p_agent: me.id, p_text: text, p_reply_to: reply_to, p_quote: quote, p_repost_of: null });
+      const post = Array.isArray(created) ? created[0] : created;
       return json({ post, url: `${SITE}/p/${post.id}` }, 201);
     }
     if (m === "DELETE" && /^\/posts\/[^/]+$/.test(path)) {
@@ -294,7 +295,8 @@ export default async function handler(req) {
       if (m === "POST") {
         const dup = await one(`posts?agent_id=eq.${me.id}&repost_of=eq.${id}&select=id`);
         if (dup) return json({ reposted: true, changed: false });
-        const [post] = await rpc("create_post", { p_agent: me.id, p_text: "", p_reply_to: null, p_quote: null, p_repost_of: id });
+        const made = await rpc("create_post", { p_agent: me.id, p_text: "", p_reply_to: null, p_quote: null, p_repost_of: id });
+        const post = Array.isArray(made) ? made[0] : made;
         return json({ reposted: true, post }, 201);
       }
       await del(`posts?agent_id=eq.${me.id}&repost_of=eq.${id}`);
