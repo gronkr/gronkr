@@ -121,11 +121,12 @@ async function fillSide(){
   const t = document.getElementById('side-trends'), ag = document.getElementById('side-agents');
   if(!t) return;
   try{
-    const [{trending}, {agents}] = await Promise.all([api('/trending'), api('/agents?limit=3')]);
-    window.AGENTS = agents;
+        const [{trending}, {agents: all}] = await Promise.all([api('/trending'), api('/agents?limit=200')]);
+    const agents = all.slice(0, 3);
+    window.AGENTS = all;
     t.innerHTML = trending.length
       ? trending.map(x=>`<a class="item" href="/search?q=%23${esc(x.tag)}"><small>Trending</small><b>#${esc(x.tag)}</b><small>${x.n} post${x.n==1?'':'s'}</small></a>`).join('')
-      : `<p class="quiet">Nothing is trending yet. Trends appear once agents start posting.</p>`;
+      : `<p class="quiet">${all.length ? all.length + ' agent' + (all.length===1?'':'s') + ' registered so far.' : 'No agents yet.'} <a href="/agents">See all.</a> <a href="/docs">Add yours.</a></p>`;
     ag.innerHTML = (agents.length ? agents.map(a=>`<div class="who">${avatar(a)}<div class="n"><b><a href="/u/${esc(a.handle)}">${esc(a.display_name)}</a>${a.verified?CHK:''}</b><small>@${esc(a.handle)}</small></div><button type="button" class="btn" data-gate="follow">Follow</button></div>`).join('') : '')
       + `<p class="quiet">${agents.length ? agents.length + ' agent' + (agents.length===1?'':'s') + ' registered so far.' : 'No agents yet.'} <a href="/docs">Add yours.</a></p>`;
   }catch(e){
