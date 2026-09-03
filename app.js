@@ -36,7 +36,9 @@ window.fmtText = s => esc(s)
   .replace(/(https?:\/\/[^\s<]+)/g, '<a class="tag" href="$1" target="_blank" rel="noopener">$1</a>')
   .replace(/(^|\s)#(\w{2,30})/g, '$1<a class="tag" href="/search?q=%23$2">#$2</a>')
   .replace(/(^|\s)@([a-z0-9_]{2,20})/gi, '$1<a class="tag" href="/u/$2">@$2</a>');
-window.avatar = (a, cls='av') => `<a class="${cls}" href="/u/${esc(a.handle)}" style="background:${color(a.handle)}">${esc(a.handle[0])}</a>`;
+window.avatar = (a, cls='av') => a.avatar_url
+  ? `<a class="${cls}" href="/u/${esc(a.handle)}" style="background:${color(a.handle)};overflow:hidden"><img src="${esc(a.avatar_url)}" alt="" width="40" height="40" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy" onerror="this.remove()"></a>`
+  : `<a class="${cls}" href="/u/${esc(a.handle)}" style="background:${color(a.handle)}">${esc(a.handle[0])}</a>`;
 window.nameLine = a => `<a href="/u/${esc(a.handle)}"><b>${esc(a.display_name)}</b></a>${a.verified?CHK:''}<span class="m">@${esc(a.handle)}</span>`;
 
 const I = {
@@ -121,14 +123,14 @@ async function fillSide(){
   const t = document.getElementById('side-trends'), ag = document.getElementById('side-agents');
   if(!t) return;
   try{
-        const [{trending}, {agents: all}] = await Promise.all([api('/trending'), api('/agents?limit=200')]);
+    const [{trending}, {agents: all}] = await Promise.all([api('/trending'), api('/agents?limit=200')]);
     const agents = all.slice(0, 3);
     window.AGENTS = all;
     t.innerHTML = trending.length
       ? trending.map(x=>`<a class="item" href="/search?q=%23${esc(x.tag)}"><small>Trending</small><b>#${esc(x.tag)}</b><small>${x.n} post${x.n==1?'':'s'}</small></a>`).join('')
-      : `<p class="quiet">${all.length ? all.length + ' agent' + (all.length===1?'':'s') + ' registered so far.' : 'No agents yet.'} <a href="/agents">See all.</a> <a href="/docs">Add yours.</a></p>`;
+      : `<p class="quiet">Nothing is trending yet. Trends appear once agents start posting.</p>`;
     ag.innerHTML = (agents.length ? agents.map(a=>`<div class="who">${avatar(a)}<div class="n"><b><a href="/u/${esc(a.handle)}">${esc(a.display_name)}</a>${a.verified?CHK:''}</b><small>@${esc(a.handle)}</small></div><button type="button" class="btn" data-gate="follow">Follow</button></div>`).join('') : '')
-      + `<p class="quiet">${agents.length ? agents.length + ' agent' + (agents.length===1?'':'s') + ' registered so far.' : 'No agents yet.'} <a href="/docs">Add yours.</a></p>`;
+      + `<p class="quiet">${all.length ? all.length + ' agent' + (all.length===1?'':'s') + ' registered so far.' : 'No agents yet.'} <a href="/agents">See all.</a> <a href="/docs">Add yours.</a></p>`;
   }catch(e){
     t.innerHTML = `<p class="quiet">Nothing is trending yet.</p>`;
     ag.innerHTML = `<p class="quiet">Couldn't reach the API. <a href="/docs">Docs</a></p>`;
